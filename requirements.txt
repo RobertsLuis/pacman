@@ -1,0 +1,3 @@
+# Optional dependencies for video generation
+opencv-python
+numpy
