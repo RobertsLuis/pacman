@@ -14,7 +14,7 @@ pip install -r requirements.txt
 1. Confira os mapas disponíveis em `maps/` (por padrão há `maze.txt`).
 2. Rode o menu principal:
    ```bash
-   python3 main.py
+   python main.py
    ```
 3. Escolha um mapa, informe um nome para a execução e siga as opções:
    - `1` roda todas as estratégias e permite animar no terminal.
@@ -23,9 +23,12 @@ pip install -r requirements.txt
 
 ## Gerar novo mapa
 ```bash
-python3 utils/map_builder.py --help
+python utils/map_builder.py --help
 ```
 Use os parâmetros desejados para criar um arquivo em `maps/`.
 
 ## Limpeza
-Remova arquivos antigos em `results/` se precisar liberar espaço
+Remova arquivos antigos em `results/` se precisar liberar espaço, utilizando o comando a seguir:
+```bash
+python clear_results.py
+```
