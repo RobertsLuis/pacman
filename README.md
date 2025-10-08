@@ -21,6 +21,15 @@ pip install -r requirements.txt
    - `2` gera HTMLs em `results/html/`.
    - `3` salva frames em texto e tenta gerar MP4 em `results/videos/`.
 
+## Estratégias disponíveis
+- **Base** – comum das demais táticas. Sempre que precisa atravessar um trecho conhecido ele aplica BFS na memória do agente para achar o menor caminho até o objetivo atual.
+- **Shortest Path (Menor caminho conhecido)** – tem visão completa do labirinto desde o início. Usa BFS global para correr até o alimento mais próximo e, quando termina a coleta, planeja outro BFS direto para a saída.
+- **Exploration (Exploração com memória)** – avalia apenas o que já foi mapeado pelo sensor. Prioriza comida conhecida; se não houver, procura células livres ainda não visitadas; por fim parte para a saída.
+- **Dead End Aware (Evita becos sem saída)** – herda a lógica de exploração, mas marca corredores que viraram becos e evita incluí-los em planos futuros, reduzindo zig-zags desnecessários.
+- **Heuristic Frontier (Fronteiras heurísticas)** – também ignora becos, porém dá preferência a fronteiras com mais vizinhos desconhecidos e menor distância atual para abrir novas áreas com rapidez.
+- **Sensor Greedy** – decide primeiro olhando apenas a janela do sensor: se houver comida visível, move na direção dela; caso contrário segue adiante por corredores livres e só volta ao plano de memória quando o sensor não oferece alternativa.
+- **Random Walk (Caminhada aleatória)** – escolhe movimentos aleatórios entre as direções possíveis, evitando apenas desfazer o passo imediatamente anterior.
+
 ## Gerar novo mapa
 ```bash
 python utils/map_builder.py --help
