@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import Dict, List
 
 from .common import DIRECTIONS, PASSABLE_TILES, Position
 
@@ -95,6 +95,22 @@ class MazeEnvironment:
         center_idx = radius
         window[center_idx][center_idx] = self.agent_direction
         return window
+
+    def get_directional_food_counts(self) -> Dict[str, int]:
+        """Return how many food pellets exist along each cardinal direction."""
+        counts = {direction: 0 for direction in DIRECTIONS}
+        for direction, (dr, dc) in DIRECTIONS.items():
+            current = self.agent_pos
+            while True:
+                current = Position(current.row + dr, current.col + dc)
+                if not self._inside(current):
+                    break
+                tile = self.grid[current.row][current.col]
+                if tile == "X":
+                    break
+                if tile == "o":
+                    counts[direction] += 1
+        return counts
 
     def tile_at(self, position: Position) -> str:
         """Return the tile stored at the requested coordinates."""

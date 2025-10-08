@@ -15,6 +15,7 @@ class BaseAgent:
 
     strategy_id = "base"
     strategy_label = "Base"
+    _direction_priority = ("N", "S", "L", "O")
 
     def __init__(self, environment: MazeEnvironment, total_food: int):
         self.env = environment
@@ -25,6 +26,7 @@ class BaseAgent:
         self.visited: set[Position] = set()
         self.plan: Deque[str] = deque()
         self.last_sensor: Optional[List[List[str]]] = None
+        self.last_food_counts: Dict[str, int] = {direction: 0 for direction in DIRECTIONS}
 
     # --- Core loop -----------------------------------------------------
     def getSensor(self) -> List[List[str]]:
@@ -54,6 +56,7 @@ class BaseAgent:
     def step(self) -> bool:
         """Execute one perception-plan-action cycle and update memory."""
         self.getSensor()
+        self.last_food_counts = self.env.get_directional_food_counts()
         self.visited.add(self.env.agent_pos)
 
         if self.env.goal_reached():
@@ -67,7 +70,9 @@ class BaseAgent:
             if self._plan_destination() != self.env.exit:
                 self.plan.clear()
 
-        if not self.plan:
+        food_priority_applied = self._apply_food_sensor_priority()
+
+        if not food_priority_applied and not self.plan:
             new_plan = self.compute_plan()
             if new_plan:
                 self.plan = deque(new_plan)
@@ -87,6 +92,41 @@ class BaseAgent:
         self.memory[blocked] = "X"
         self.plan.clear()
         return False
+
+    # --- Food sensor prioritisation -----------------------------------
+    def _apply_food_sensor_priority(self) -> bool:
+        """Override the current plan when the directional sensor spots food."""
+        direction = self._food_sensor_direction()
+        if direction is None:
+            return False
+        self.plan.clear()
+        self.plan.append(direction)
+        return True
+
+    def _food_sensor_direction(self) -> Optional[str]:
+        """Return the preferred direction suggested by the food-count sensor."""
+        if not self.last_food_counts:
+            return None
+        max_count = max(self.last_food_counts.values(), default=0)
+        if max_count <= 0:
+            return None
+
+        candidates = [d for d, count in self.last_food_counts.items() if count == max_count]
+
+        ordered_preferences: List[str] = []
+        if self.direction in candidates:
+            ordered_preferences.append(self.direction)
+        for direction in self._direction_priority:
+            if direction not in ordered_preferences:
+                ordered_preferences.append(direction)
+
+        for direction in ordered_preferences:
+            if direction not in candidates:
+                continue
+            neighbor = self.env.agent_pos.neighbor(direction)
+            if self._can_traverse(neighbor):
+                return direction
+        return None
 
     # --- Memory helpers ------------------------------------------------
     def _update_memory(self, sensor: List[List[str]]) -> None:
