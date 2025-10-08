@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.build/
+dist/
+pip-wheel-metadata/
+
+# Virtualenvs (se você usar)
+.venv/
+venv/
+env/
+
+# IDEs (opcional)
+.vscode/
+.idea/
