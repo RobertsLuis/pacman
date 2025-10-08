@@ -26,6 +26,16 @@ pip install -r requirements.txt
 python utils/map_builder.py --help
 ```
 Use os parâmetros desejados para criar um arquivo em `maps/`.
+### Exemplos gerados:
+```bash
+python utils/map_builder.py --rows 9 --cols 15 --wall-density 0.35 --food 4 --seed 21 --output maps/compact_lab.txt
+```
+```bash
+python utils/map_builder.py --rows 12 --cols 20 --wall-density 0.18 --food 12 --seed 314 --output maps/food_frenzy.txt
+```
+```bash
+python utils/map_builder.py --rows 10 --cols 24 --wall-density 0.05 --food 6 --seed 73 --output maps/long_corridor.txt
+```
 
 ## Limpeza
 Remova arquivos antigos em `results/` se precisar liberar espaço, utilizando o comando a seguir:
