@@ -202,9 +202,10 @@ def run_terminal_workflow() -> None:
 def run_html_workflow() -> None:
     ensure_dirs_exist()
     maze_path = choose_map()
+    sensor_size = prompt_sensor_size()
     run_slug = prompt_run_name()
 
-    results = run_all_strategies(maze_path)
+    results = run_all_strategies(maze_path, sensor_size)
     for strategy_id, result in results.items():
         filename = build_output_name(run_slug, strategy_id, ".html")
         output_path = RESULT_DIRS["html"] / filename
@@ -222,9 +223,10 @@ def run_html_workflow() -> None:
 def run_video_workflow() -> None:
     ensure_dirs_exist()
     maze_path = choose_map()
+    sensor_size = prompt_sensor_size()
     run_slug = prompt_run_name()
 
-    results = run_all_strategies(maze_path)
+    results = run_all_strategies(maze_path, sensor_size)
     for strategy_id, result in results.items():
         frames_name = build_output_name(run_slug, strategy_id, ".txt")
         video_name = build_output_name(run_slug, strategy_id, ".mp4")

@@ -28,7 +28,7 @@ class BaseAgent:
 
     # --- Core loop -----------------------------------------------------
     def getSensor(self) -> List[List[str]]:
-        """Return the 3x3 sensor snapshot and persist it in memory."""
+        """Return the sensor snapshot and persist it in memory."""
         sensor = self.env.get_sensor_window()
         self.last_sensor = sensor
         self._update_memory(sensor)
@@ -92,8 +92,9 @@ class BaseAgent:
     def _update_memory(self, sensor: List[List[str]]) -> None:
         """Write the current sensor window into the agent's mental map."""
         center = self.env.agent_pos
-        for dr, row_values in enumerate(sensor, start=-1):
-            for dc, value in enumerate(row_values, start=-1):
+        radius = self.env.sensor_radius
+        for dr, row_values in enumerate(sensor, start=-radius):
+            for dc, value in enumerate(row_values, start=-radius):
                 position = Position(center.row + dr, center.col + dc)
                 if dr == 0 and dc == 0:
                     # NOTE: The agent stores the underlying tile at its own cell.
