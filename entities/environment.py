@@ -10,14 +10,19 @@ from .common import DIRECTIONS, PASSABLE_TILES, Position
 class MazeEnvironment:
     """Grid-based maze that exposes sensor data and movement helpers."""
 
-    def __init__(self, grid: List[List[str]]):
+    def __init__(self, grid: List[List[str]], sensor_size: int = 3):
         """Initialize the maze state from a rectangular matrix of tiles."""
         if not grid or not grid[0]:
             raise ValueError("Maze grid must be a non-empty rectangle.")
 
+        if sensor_size % 2 == 0 or sensor_size < 3:
+            raise ValueError("Sensor size must be an odd number >= 3.")
+
         self.grid = grid
         self.rows = len(grid)
         self.cols = len(grid[0])
+        self.sensor_size = sensor_size
+        self.sensor_radius = sensor_size // 2
 
         self.entry = self._find_tile("E")
         self.exit = self._find_tile("S")
@@ -29,12 +34,12 @@ class MazeEnvironment:
         self.food_collected = 0
 
     @classmethod
-    def from_file(cls, path: str) -> "MazeEnvironment":
+    def from_file(cls, path: str, sensor_size: int = 3) -> "MazeEnvironment":
         """Build a maze environment by reading an ASCII map from disk."""
         with open(path, "r", encoding="ascii") as maze_file:
             lines = [line.rstrip("\n") for line in maze_file]
         grid = [list(line) for line in lines if line]
-        return cls(grid)
+        return cls(grid, sensor_size)
 
     def _find_tile(self, tile: str) -> Position:
         """Locate the coordinates of a specific tile."""
@@ -72,19 +77,23 @@ class MazeEnvironment:
         return on_exit and has_all_food
 
     def get_sensor_window(self) -> List[List[str]]:
-        """Capture a 3x3 perception window centered on the agent."""
+        """Capture a perception window centered on the agent."""
         window: List[List[str]] = []
-        for dr in (-1, 0, 1):
+        radius = self.sensor_radius
+
+        for dr in range(-radius, radius + 1):
             row_values: List[str] = []
-            for dc in (-1, 0, 1):
+            for dc in range(-radius, radius + 1):
                 pos = Position(self.agent_pos.row + dr, self.agent_pos.col + dc)
                 if self._inside(pos):
                     row_values.append(self.grid[pos.row][pos.col])
                 else:
                     row_values.append("X")
             window.append(row_values)
+
         # NOTE: The center cell mirrors the agent direction instead of raw tile.
-        window[1][1] = self.agent_direction
+        center_idx = radius
+        window[center_idx][center_idx] = self.agent_direction
         return window
 
     def tile_at(self, position: Position) -> str:

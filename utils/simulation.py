@@ -91,7 +91,9 @@ def get_strategy(strategy_id: str) -> StrategySpec:
         return STRATEGIES[strategy_id]
     except KeyError as exc:  # pragma: no cover - defensive
         available = ", ".join(sorted(STRATEGIES))
-        raise ValueError(f"Estrategia desconhecida '{strategy_id}'. Disponiveis: {available}.") from exc
+        raise ValueError(
+            f"Estrategia desconhecida '{strategy_id}'. Disponiveis: {available}."
+        ) from exc
 
 
 def available_strategies() -> Iterable[StrategySpec]:
@@ -103,9 +105,10 @@ def run_simulation(
     max_steps: int = 500,
     display_report: bool = True,
     strategy_id: str = DEFAULT_STRATEGY_ID,
+    sensor_size: int = 3,
 ) -> SimulationResult:
     strategy = get_strategy(strategy_id)
-    env = MazeEnvironment.from_file(maze_path)
+    env = MazeEnvironment.from_file(maze_path, sensor_size)
     agent = strategy.factory(env)
 
     frames: List[str] = [env.render()]
@@ -148,6 +151,7 @@ def run_simulations_for(
     strategy_ids: Optional[Iterable[str]] = None,
     max_steps: int = 500,
     display_report: bool = True,
+    sensor_size: int = 3,
 ) -> Dict[str, SimulationResult]:
     ids = list(strategy_ids) if strategy_ids else list(STRATEGIES.keys())
     results: Dict[str, SimulationResult] = {}
@@ -157,6 +161,7 @@ def run_simulations_for(
             max_steps=max_steps,
             display_report=display_report,
             strategy_id=strategy_id,
+            sensor_size=sensor_size,
         )
     return results
 

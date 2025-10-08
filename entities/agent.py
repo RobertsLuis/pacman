@@ -28,7 +28,7 @@ class BaseAgent:
 
     # --- Core loop -----------------------------------------------------
     def getSensor(self) -> List[List[str]]:
-        """Return the 3x3 sensor snapshot and persist it in memory."""
+        """Return the sensor snapshot and persist it in memory."""
         sensor = self.env.get_sensor_window()
         self.last_sensor = sensor
         self._update_memory(sensor)
@@ -59,7 +59,9 @@ class BaseAgent:
         if self.env.goal_reached():
             return False
 
-        exit_known = self.env.food_collected == self.total_food and self.env.exit in self.memory
+        exit_known = (
+            self.env.food_collected == self.total_food and self.env.exit in self.memory
+        )
         if exit_known and self.plan:
             # NOTE: Discard outdated plans once the exit becomes the primary goal.
             if self._plan_destination() != self.env.exit:
@@ -90,8 +92,9 @@ class BaseAgent:
     def _update_memory(self, sensor: List[List[str]]) -> None:
         """Write the current sensor window into the agent's mental map."""
         center = self.env.agent_pos
-        for dr, row_values in enumerate(sensor, start=-1):
-            for dc, value in enumerate(row_values, start=-1):
+        radius = self.env.sensor_radius
+        for dr, row_values in enumerate(sensor, start=-radius):
+            for dc, value in enumerate(row_values, start=-radius):
                 position = Position(center.row + dr, center.col + dc)
                 if dr == 0 and dc == 0:
                     # NOTE: The agent stores the underlying tile at its own cell.
@@ -195,7 +198,9 @@ class BaseAgent:
 
     def _can_traverse(self, position: Position) -> bool:
         """Return True when the real grid allows visiting the position."""
-        if not (0 <= position.row < self.env.rows and 0 <= position.col < self.env.cols):
+        if not (
+            0 <= position.row < self.env.rows and 0 <= position.col < self.env.cols
+        ):
             return False
         tile = self.env.grid[position.row][position.col]
         return tile != "X"
@@ -326,35 +331,46 @@ class RandomWalkAgent(BaseAgent):
 
 
 class SensorGreedyAgent(BaseAgent):
-    """Greedy policy that consumes adjacent food before exploring."""
+    """Agent that moves toward visible food greedily."""
 
     strategy_id = "sensor_greedy"
-    strategy_label = "Sensor guloso"
+    strategy_label = "Sensor Greedy"
 
-    def compute_plan(self) -> List[str]:
-        if self.last_sensor:
-            direction_by_position = {
-                "N": self.last_sensor[0][1],
-                "S": self.last_sensor[2][1],
-                "L": self.last_sensor[1][2],
-                "O": self.last_sensor[1][0],
-            }
-            food_directions = [direction for direction, tile in direction_by_position.items() if tile == "o"]
-            if food_directions:
-                chosen = food_directions[0]
-                return [chosen]
+    def sense_and_decide(self) -> str:
+        """Choose direction toward nearest visible food."""
+        window = self.environment.get_sensor_window()
+        sensor_size = self.environment.sensor_size
+        center = sensor_size // 2
 
-            passable = [direction for direction, tile in direction_by_position.items() if tile in {"_", "E", "S"}]
-            if passable:
-                # NOTE: Prefer continuing forward when the current heading is free.
-                if self.direction in passable:
-                    return [self.direction]
-                return [passable[0]]
+        best_direction = None
+        min_distance = float("inf")
 
-        plan = self._memory_plan()
-        if plan:
-            return plan
-        return []
+        # Search for food in the sensor window
+        for row_idx, row in enumerate(window):
+            for col_idx, cell in enumerate(row):
+                if cell == "o":
+                    # Calculate Manhattan distance from center
+                    distance = abs(row_idx - center) + abs(col_idx - center)
+                    if distance < min_distance:
+                        min_distance = distance
+                        # Determine direction toward this food
+                        dr = row_idx - center
+                        dc = col_idx - center
+
+                        # Choose primary direction based on larger offset
+                        if abs(dr) > abs(dc):
+                            best_direction = "S" if dr > 0 else "N"
+                        elif abs(dc) > abs(dr):
+                            best_direction = "E" if dc > 0 else "W"
+                        else:
+                            # Equal distances, prefer horizontal movement
+                            best_direction = "E" if dc > 0 else "W"
+
+        if best_direction:
+            return best_direction
+
+        # No food visible, try moving in current direction
+        return self.environment.agent_direction
 
 
 class DeadEndAwareAgent(BaseAgent):
@@ -383,7 +399,9 @@ class DeadEndAwareAgent(BaseAgent):
             if pos in {self.env.entry, self.env.exit}:
                 continue
 
-            if any(pos.neighbor(direction) not in self.memory for direction in DIRECTIONS):
+            if any(
+                pos.neighbor(direction) not in self.memory for direction in DIRECTIONS
+            ):
                 continue
 
             neighbors_passable = 0
@@ -443,13 +461,12 @@ class HeuristicFrontierAgent(BaseAgent):
             and pos not in self.visited
             and pos not in self.dead_ends
         ]
-        frontiers = [
-            pos
-            for pos in frontiers
-            if self._count_unknown_neighbors(pos) > 0
-        ]
+        frontiers = [pos for pos in frontiers if self._count_unknown_neighbors(pos) > 0]
         if not frontiers:
-            if self.env.exit in self.memory and self.env.food_collected == self.total_food:
+            if (
+                self.env.exit in self.memory
+                and self.env.food_collected == self.total_food
+            ):
                 return self.env.exit
             return None
 
@@ -462,16 +479,21 @@ class HeuristicFrontierAgent(BaseAgent):
     def _frontier_score(self, position: Position) -> Tuple[int, int]:
         """Return ordering tuple prioritizing frontiers with more unknowns."""
         unknown_neighbors = self._count_unknown_neighbors(position)
-        manhattan = abs(position.row - self.env.agent_pos.row) + abs(position.col - self.env.agent_pos.col)
+        manhattan = abs(position.row - self.env.agent_pos.row) + abs(
+            position.col - self.env.agent_pos.col
+        )
         return (-unknown_neighbors, manhattan)
 
     def _heuristic(self, position: Position) -> int:
-        return abs(position.row - self.env.agent_pos.row) + abs(position.col - self.env.agent_pos.col)
+        return abs(position.row - self.env.agent_pos.row) + abs(
+            position.col - self.env.agent_pos.col
+        )
 
     def _count_unknown_neighbors(self, position: Position) -> int:
         """Count how many adjacent tiles have not been sensed yet."""
         return sum(
-            1 for direction in DIRECTIONS
+            1
+            for direction in DIRECTIONS
             if position.neighbor(direction) not in self.memory
         )
 
@@ -486,7 +508,9 @@ class HeuristicFrontierAgent(BaseAgent):
             if pos in {self.env.entry, self.env.exit}:
                 continue
 
-            if any(pos.neighbor(direction) not in self.memory for direction in DIRECTIONS):
+            if any(
+                pos.neighbor(direction) not in self.memory for direction in DIRECTIONS
+            ):
                 continue
 
             neighbors_passable = 0
