@@ -147,7 +147,7 @@ def run_simulations_for(
     maze_path: str,
     strategy_ids: Optional[Iterable[str]] = None,
     max_steps: int = 500,
-    display_report: bool = False,
+    display_report: bool = True,
 ) -> Dict[str, SimulationResult]:
     ids = list(strategy_ids) if strategy_ids else list(STRATEGIES.keys())
     results: Dict[str, SimulationResult] = {}
