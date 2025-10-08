@@ -37,6 +37,7 @@ DEFAULT_FPS = 3
 # ---------------------------------------------------------------------------
 # Helpers
 
+
 def prompt(prompt_text: str) -> str:
     try:
         return input(prompt_text)
@@ -94,9 +95,24 @@ def ensure_dirs_exist() -> None:
         directory.mkdir(parents=True, exist_ok=True)
 
 
-def run_all_strategies(maze_path: Path) -> Dict[str, SimulationResult]:
-    print("\nExecutando estratégias...")
-    results = run_simulations_for(str(maze_path), display_report=False)
+def prompt_sensor_size() -> int:
+    """Prompt user for sensor window size."""
+    while True:
+        choice = prompt("Tamanho do sensor (3, 5, 7) [3]: ").strip()
+        if not choice:
+            return 3
+        if choice in ["3", "5", "7"]:
+            return int(choice)
+        print("Tamanho inválido. Use 3, 5 ou 7.")
+
+
+def run_all_strategies(
+    maze_path: Path, sensor_size: int = 3
+) -> Dict[str, SimulationResult]:
+    print(f"\nExecutando estratégias com sensor {sensor_size}x{sensor_size}...")
+    results = run_simulations_for(
+        str(maze_path), display_report=False, sensor_size=sensor_size
+    )
     print("Concluído.\n")
     return results
 
@@ -134,7 +150,9 @@ def prompt_strategy_choice(results: Dict[str, SimulationResult]) -> str | None:
     print("\nEstratégias disponíveis para animação:")
     for index, res in enumerate(ordered, start=1):
         status = "OK" if res.goal_reached else "Incompleto"
-        print(f" {index}) {res.strategy_label} ({res.strategy_id}) - Score {res.score} [{status}]")
+        print(
+            f" {index}) {res.strategy_label} ({res.strategy_id}) - Score {res.score} [{status}]"
+        )
     print(" 0) Voltar ao menu")
 
     while True:
@@ -155,12 +173,14 @@ def build_output_name(run_slug: str, strategy_id: str, suffix: str) -> str:
 # ---------------------------------------------------------------------------
 # Workflows
 
+
 def run_terminal_workflow() -> None:
     ensure_dirs_exist()
     maze_path = choose_map()
+    sensor_size = prompt_sensor_size()
     run_slug = prompt_run_name()
 
-    results = run_all_strategies(maze_path)
+    results = run_all_strategies(maze_path, sensor_size)
     scoreboard_text = render_scoreboard(results)
     print("\nResumo das estratégias:\n")
     print(scoreboard_text)
@@ -229,7 +249,9 @@ def run_video_workflow() -> None:
             )
         except RuntimeError as exc:
             print(exc)
-            print("Dica: instale dependências opcionais com `pip install opencv-python numpy`.")
+            print(
+                "Dica: instale dependências opcionais com `pip install opencv-python numpy`."
+            )
 
     scoreboard_path = write_scoreboard(run_slug, results)
     print(f"Quadro comparativo salvo em: {scoreboard_path}")
@@ -237,6 +259,7 @@ def run_video_workflow() -> None:
 
 # ---------------------------------------------------------------------------
 # Menu principal
+
 
 def show_menu() -> None:
     print("\n=== Pac-Man IA ===")
