@@ -25,6 +25,7 @@ def _require_video_dependencies() -> Tuple["cv2", "np"]:  # type: ignore[name-de
         raise RuntimeError(
             "As dependências 'opencv-python' e 'numpy' são necessárias para gerar vídeo."
         ) from exc
+    print("teste")
     return cv2, np
 
 

@@ -12,6 +12,7 @@ from utils.simulation import DEFAULT_MAZE_PATH, DEFAULT_STRATEGY_ID, SimulationR
 
 def clear_screen() -> None:
     os.system("cls" if os.name == "nt" else "clear")
+    print("asdadad")
 
 
 def play_simulation(result: SimulationResult, delay: float = 0.3) -> None:
