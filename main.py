@@ -31,8 +31,8 @@ RESULT_DIRS = {
 }
 
 MAPS_DIR = Path("maps")
-DEFAULT_DELAY = 0.3
-DEFAULT_FPS = 3
+DEFAULT_DELAY = 0.2
+DEFAULT_FPS = 5
 
 # ---------------------------------------------------------------------------
 # Helpers
