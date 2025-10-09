@@ -106,9 +106,14 @@ def run_simulation(
     display_report: bool = True,
     strategy_id: str = DEFAULT_STRATEGY_ID,
     sensor_size: int = 3,
+    food_sensor_enabled: bool = True,
 ) -> SimulationResult:
     strategy = get_strategy(strategy_id)
-    env = MazeEnvironment.from_file(maze_path, sensor_size)
+    env = MazeEnvironment.from_file(
+        maze_path,
+        sensor_size=sensor_size,
+        food_sensor_enabled=food_sensor_enabled,
+    )
     agent = strategy.factory(env)
 
     frames: List[str] = [env.render()]
@@ -152,6 +157,7 @@ def run_simulations_for(
     max_steps: int = 500,
     display_report: bool = True,
     sensor_size: int = 3,
+    food_sensor_enabled: bool = True,
 ) -> Dict[str, SimulationResult]:
     ids = list(strategy_ids) if strategy_ids else list(STRATEGIES.keys())
     results: Dict[str, SimulationResult] = {}
@@ -162,6 +168,7 @@ def run_simulations_for(
             display_report=display_report,
             strategy_id=strategy_id,
             sensor_size=sensor_size,
+            food_sensor_enabled=food_sensor_enabled,
         )
     return results
 

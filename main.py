@@ -106,12 +106,32 @@ def prompt_sensor_size() -> int:
         print("Tamanho inválido. Use 3, 5 ou 7.")
 
 
+def prompt_food_sensor_enabled() -> bool:
+    """Ask whether the directional food sensor should be enabled."""
+    while True:
+        choice = prompt("Ativar sensor direcional de comida? [S/n]: ").strip().lower()
+        if choice in {"", "s", "sim", "y", "yes"}:
+            return True
+        if choice in {"n", "nao", "não", "no"}:
+            return False
+        print("Resposta inválida. Digite 's' para sim ou 'n' para não.")
+
+
 def run_all_strategies(
-    maze_path: Path, sensor_size: int = 3
+    maze_path: Path,
+    sensor_size: int = 3,
+    food_sensor_enabled: bool = True,
 ) -> Dict[str, SimulationResult]:
-    print(f"\nExecutando estratégias com sensor {sensor_size}x{sensor_size}...")
+    status = "ativado" if food_sensor_enabled else "desativado"
+    print(
+        f"\nExecutando estratégias com sensor {sensor_size}x{sensor_size} "
+        f"(direcional {status})..."
+    )
     results = run_simulations_for(
-        str(maze_path), display_report=False, sensor_size=sensor_size
+        str(maze_path),
+        display_report=False,
+        sensor_size=sensor_size,
+        food_sensor_enabled=food_sensor_enabled,
     )
     print("Concluído.\n")
     return results
@@ -178,9 +198,10 @@ def run_terminal_workflow() -> None:
     ensure_dirs_exist()
     maze_path = choose_map()
     sensor_size = prompt_sensor_size()
+    food_sensor_enabled = prompt_food_sensor_enabled()
     run_slug = prompt_run_name()
 
-    results = run_all_strategies(maze_path, sensor_size)
+    results = run_all_strategies(maze_path, sensor_size, food_sensor_enabled)
     scoreboard_text = render_scoreboard(results)
     print("\nResumo das estratégias:\n")
     print(scoreboard_text)
@@ -203,9 +224,10 @@ def run_html_workflow() -> None:
     ensure_dirs_exist()
     maze_path = choose_map()
     sensor_size = prompt_sensor_size()
+    food_sensor_enabled = prompt_food_sensor_enabled()
     run_slug = prompt_run_name()
 
-    results = run_all_strategies(maze_path, sensor_size)
+    results = run_all_strategies(maze_path, sensor_size, food_sensor_enabled)
     for strategy_id, result in results.items():
         filename = build_output_name(run_slug, strategy_id, ".html")
         output_path = RESULT_DIRS["html"] / filename
@@ -224,9 +246,10 @@ def run_video_workflow() -> None:
     ensure_dirs_exist()
     maze_path = choose_map()
     sensor_size = prompt_sensor_size()
+    food_sensor_enabled = prompt_food_sensor_enabled()
     run_slug = prompt_run_name()
 
-    results = run_all_strategies(maze_path, sensor_size)
+    results = run_all_strategies(maze_path, sensor_size, food_sensor_enabled)
     for strategy_id, result in results.items():
         frames_name = build_output_name(run_slug, strategy_id, ".txt")
         video_name = build_output_name(run_slug, strategy_id, ".mp4")

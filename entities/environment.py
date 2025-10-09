@@ -10,7 +10,12 @@ from .common import DIRECTIONS, PASSABLE_TILES, Position
 class MazeEnvironment:
     """Grid-based maze that exposes sensor data and movement helpers."""
 
-    def __init__(self, grid: List[List[str]], sensor_size: int = 3):
+    def __init__(
+        self,
+        grid: List[List[str]],
+        sensor_size: int = 3,
+        food_sensor_enabled: bool = True,
+    ):
         """Initialize the maze state from a rectangular matrix of tiles."""
         if not grid or not grid[0]:
             raise ValueError("Maze grid must be a non-empty rectangle.")
@@ -23,6 +28,7 @@ class MazeEnvironment:
         self.cols = len(grid[0])
         self.sensor_size = sensor_size
         self.sensor_radius = sensor_size // 2
+        self.food_sensor_enabled = food_sensor_enabled
 
         self.entry = self._find_tile("E")
         self.exit = self._find_tile("S")
@@ -34,12 +40,17 @@ class MazeEnvironment:
         self.food_collected = 0
 
     @classmethod
-    def from_file(cls, path: str, sensor_size: int = 3) -> "MazeEnvironment":
+    def from_file(
+        cls,
+        path: str,
+        sensor_size: int = 3,
+        food_sensor_enabled: bool = True,
+    ) -> "MazeEnvironment":
         """Build a maze environment by reading an ASCII map from disk."""
         with open(path, "r", encoding="ascii") as maze_file:
             lines = [line.rstrip("\n") for line in maze_file]
         grid = [list(line) for line in lines if line]
-        return cls(grid, sensor_size)
+        return cls(grid, sensor_size, food_sensor_enabled)
 
     def _find_tile(self, tile: str) -> Position:
         """Locate the coordinates of a specific tile."""
@@ -99,6 +110,9 @@ class MazeEnvironment:
     def get_directional_food_counts(self) -> Dict[str, int]:
         """Return how many food pellets exist along each cardinal direction."""
         counts = {direction: 0 for direction in DIRECTIONS}
+        if not self.food_sensor_enabled:
+            return counts
+
         for direction, (dr, dc) in DIRECTIONS.items():
             current = self.agent_pos
             while True:

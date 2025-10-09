@@ -21,6 +21,10 @@ pip install -r requirements.txt
    - `2` gera HTMLs em `results/html/`.
    - `3` salva frames em texto e tenta gerar MP4 em `results/videos/`.
 
+## Sensores
+- **Janela local** – captura um recorte quadrado (3x3, 5x5 ou 7x7) ao redor do agente, incluindo paredes, caminhos livres e comidas. Esse sensor alimenta a memória das estratégias e é exibido nos visualizadores.
+- **Sensor direcional de comida** – percorre cada direção (N, S, L, O) até a próxima parede e conta quantas comidas estão alinhadas naquele corredor. Ele pode ser habilitado ou desabilitado em qualquer workflow do `main.py`; quando ativado, os agentes priorizam a direção com maior contagem antes de seguir o plano baseado em memória.
+
 ## Estratégias disponíveis
 - **Base** – comum das demais táticas. Sempre que precisa atravessar um trecho conhecido ele aplica BFS na memória do agente para achar o menor caminho até o objetivo atual.
 - **Shortest Path (Menor caminho conhecido)** – tem visão completa do labirinto desde o início. Usa BFS global para correr até o alimento mais próximo e, quando termina a coleta, planeja outro BFS direto para a saída.
